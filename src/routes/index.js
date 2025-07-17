@@ -1,5 +1,4 @@
 import express from 'express';
-import userRoutes from './userRoutes.js';
 import integrationRoutes from './integrationRoutes.js';
 import organizationRoutes from './organizationRoutes.js';
 import repositoryRoutes from './repositoryRoutes.js';
@@ -9,7 +8,6 @@ import testRoutes from './testRoutes.js';
 const router = express.Router();
 
 // API routes
-router.use('/users', userRoutes);
 router.use('/auth', integrationRoutes);
 router.use('/organizations', organizationRoutes);
 router.use('/repositories', repositoryRoutes);
@@ -24,9 +22,8 @@ if (process.env.NODE_ENV === 'development') {
 router.get('/', (req, res) => {
   res.json({
     success: true,
-    message: 'Upwork Task Backend API',
+    message: 'Upwork Task Backend API - GitHub Integration',
     endpoints: {
-      users: '/api/users',
       auth: '/api/auth',
       organizations: '/api/organizations',
       repositories: '/api/repositories',
