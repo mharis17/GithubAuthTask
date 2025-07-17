@@ -19,57 +19,10 @@ const organizationSchema = new mongoose.Schema({
   description: {
     type: String
   },
-  company: {
-    type: String
-  },
-  blog: {
-    type: String
-  },
-  location: {
-    type: String
-  },
-  email: {
-    type: String
-  },
-  twitter_username: {
-    type: String
-  },
-  
-  // Organization settings
-  is_verified: {
-    type: Boolean,
-    default: false
-  },
-  has_organization_projects: {
-    type: Boolean,
-    default: false
-  },
-  has_repository_projects: {
-    type: Boolean,
-    default: false
-  },
-  public_repos: {
-    type: Number,
-    default: 0
-  },
-  public_gists: {
-    type: Number,
-    default: 0
-  },
-  followers: {
-    type: Number,
-    default: 0
-  },
-  following: {
-    type: Number,
-    default: 0
-  },
-  
-  // URLs
-  html_url: {
-    type: String
-  },
   avatar_url: {
+    type: String
+  },
+  html_url: {
     type: String
   },
   

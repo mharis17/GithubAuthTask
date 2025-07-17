@@ -16,9 +16,7 @@ const issueChangelogSchema = new mongoose.Schema({
   actor: {
     login: String,
     github_id: Number,
-    type: String,
-    avatar_url: String,
-    html_url: String
+    avatar_url: String
   },
   
   // Issue reference
@@ -27,65 +25,9 @@ const issueChangelogSchema = new mongoose.Schema({
     required: true
   },
   
-  // Event specific data
-  commit_id: {
-    type: String
-  },
-  commit_url: {
-    type: String
-  },
-  
-  // Label changes
-  label: {
-    name: String,
-    color: String
-  },
-  
-  // Assignee changes
-  assignee: {
-    login: String,
-    github_id: Number,
-    type: String,
-    avatar_url: String,
-    html_url: String
-  },
-  
-  // Milestone changes
-  milestone: {
-    title: String,
-    number: Number
-  },
-  
-  // Rename changes
-  rename: {
-    from: String,
-    to: String
-  },
-  
-  // Review changes
-  review_requester: {
-    login: String,
-    github_id: Number,
-    type: String,
-    avatar_url: String,
-    html_url: String
-  },
-  requested_reviewer: {
-    login: String,
-    github_id: Number,
-    type: String,
-    avatar_url: String,
-    html_url: String
-  },
-  
   // Dates
   created_at: {
     type: Date
-  },
-  
-  // URLs
-  url: {
-    type: String
   },
   
   // Issue reference
@@ -138,7 +80,6 @@ issueChangelogSchema.index({ organization_id: 1 });
 issueChangelogSchema.index({ integration_id: 1 });
 issueChangelogSchema.index({ event: 1 });
 issueChangelogSchema.index({ created_at: -1 });
-issueChangelogSchema.index({ 'actor.login': 1 });
 
 const IssueChangelog = mongoose.model('IssueChangelog', issueChangelogSchema);
 

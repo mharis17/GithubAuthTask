@@ -20,90 +20,12 @@ const repositorySchema = new mongoose.Schema({
   description: {
     type: String
   },
-  homepage: {
-    type: String
-  },
   language: {
     type: String
   },
-  default_branch: {
-    type: String,
-    default: 'main'
-  },
-  
-  // Repository settings
   private: {
     type: Boolean,
     default: false
-  },
-  fork: {
-    type: Boolean,
-    default: false
-  },
-  archived: {
-    type: Boolean,
-    default: false
-  },
-  disabled: {
-    type: Boolean,
-    default: false
-  },
-  has_issues: {
-    type: Boolean,
-    default: true
-  },
-  has_projects: {
-    type: Boolean,
-    default: false
-  },
-  has_downloads: {
-    type: Boolean,
-    default: true
-  },
-  has_wiki: {
-    type: Boolean,
-    default: true
-  },
-  has_pages: {
-    type: Boolean,
-    default: false
-  },
-  has_discussions: {
-    type: Boolean,
-    default: false
-  },
-  
-  // Statistics
-  stargazers_count: {
-    type: Number,
-    default: 0
-  },
-  watchers_count: {
-    type: Number,
-    default: 0
-  },
-  forks_count: {
-    type: Number,
-    default: 0
-  },
-  open_issues_count: {
-    type: Number,
-    default: 0
-  },
-  size: {
-    type: Number,
-    default: 0
-  },
-  
-  // Dates
-  created_at: {
-    type: Date
-  },
-  updated_at: {
-    type: Date
-  },
-  pushed_at: {
-    type: Date
   },
   
   // URLs
@@ -113,23 +35,12 @@ const repositorySchema = new mongoose.Schema({
   clone_url: {
     type: String
   },
-  git_url: {
-    type: String
-  },
-  ssh_url: {
-    type: String
-  },
-  svn_url: {
-    type: String
-  },
   
   // Owner information
   owner: {
     login: String,
     github_id: Number,
-    type: String,
-    avatar_url: String,
-    html_url: String
+    avatar_url: String
   },
   
   // Organization reference
@@ -165,7 +76,6 @@ repositorySchema.index({ github_id: 1 });
 repositorySchema.index({ full_name: 1 });
 repositorySchema.index({ organization_id: 1 });
 repositorySchema.index({ integration_id: 1 });
-repositorySchema.index({ 'owner.login': 1 });
 
 const Repository = mongoose.model('Repository', repositorySchema);
 

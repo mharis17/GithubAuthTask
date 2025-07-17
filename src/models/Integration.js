@@ -21,30 +21,12 @@ const integrationSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  refresh_token: {
-    type: String
-  },
   
   // Integration status
   status: {
     type: String,
-    enum: ['active', 'inactive', 'error'],
+    enum: ['active', 'inactive'],
     default: 'active'
-  },
-  
-  // GitHub profile data
-  profile: {
-    type: mongoose.Schema.Types.Mixed
-  },
-  
-  // Sync information
-  last_sync: {
-    type: Date
-  },
-  sync_status: {
-    type: String,
-    enum: ['pending', 'in_progress', 'completed', 'failed'],
-    default: 'pending'
   },
   
   // Audit fields
@@ -64,7 +46,6 @@ const integrationSchema = new mongoose.Schema({
 // Indexes
 integrationSchema.index({ github_id: 1 });
 integrationSchema.index({ username: 1 });
-integrationSchema.index({ status: 1 });
 
 const Integration = mongoose.model('Integration', integrationSchema);
 
