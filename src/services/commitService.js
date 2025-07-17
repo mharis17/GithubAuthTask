@@ -30,10 +30,15 @@ const getCommitBySha = async (sha) => {
   }
 };
 
-const getAllCommits = async ({ page = 1, limit = 10, repository_id = '', author = '' }) => {
+const getAllCommits = async ({ page = 1, limit = 10, repository_id = '', author = '', integrationId = '' }) => {
   try {
     const skip = (page - 1) * limit;
     let query = {};
+    
+    // Filter by integration ID to ensure user only sees their data
+    if (integrationId) {
+      query.integration_id = integrationId;
+    }
     
     if (repository_id) {
       query.repository_id = repository_id;
@@ -98,8 +103,11 @@ const syncCommitsFromGitHub = async (repositoryId, { since, until } = {}) => {
     
     for (const githubCommit of githubCommits) {
       try {
-        // Check if commit already exists
-        let commit = await Commit.findOne({ sha: githubCommit.sha });
+        // Check if commit already exists for this repository
+        let commit = await Commit.findOne({ 
+          sha: githubCommit.sha,
+          repository_id: repositoryId
+        });
         
         if (commit) {
           // Update existing commit

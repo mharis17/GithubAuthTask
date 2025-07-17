@@ -29,19 +29,22 @@ const getOrganizationByGitHubId = async (githubId) => {
   }
 };
 
-const getAllOrganizations = async ({ page = 1, limit = 10, search = '' }) => {
+const getAllOrganizations = async ({ page = 1, limit = 10, search = '', integrationId = '' }) => {
   try {
     const skip = (page - 1) * limit;
     let query = {};
     
+    // Filter by integration ID to ensure user only sees their data
+    if (integrationId) {
+      query.integration_id = integrationId;
+    }
+    
     if (search) {
-      query = {
-        $or: [
-          { login: { $regex: search, $options: 'i' } },
-          { name: { $regex: search, $options: 'i' } },
-          { description: { $regex: search, $options: 'i' } }
-        ]
-      };
+      query.$or = [
+        { login: { $regex: search, $options: 'i' } },
+        { name: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } }
+      ];
     }
     
     const organizations = await Organization.find(query)
@@ -86,8 +89,11 @@ const syncOrganizationsFromGitHub = async (integrationId) => {
     
     for (const githubOrg of githubOrganizations) {
       try {
-        // Check if organization already exists
-        let organization = await Organization.findOne({ github_id: githubOrg.id });
+        // Check if organization already exists for this integration
+        let organization = await Organization.findOne({ 
+          github_id: githubOrg.id,
+          integration_id: integrationId
+        });
         
         if (organization) {
           // Update existing organization

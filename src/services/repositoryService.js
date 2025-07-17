@@ -33,10 +33,15 @@ const getRepositoryByGitHubId = async (githubId) => {
   }
 };
 
-const getAllRepositories = async ({ page = 1, limit = 10, search = '', organization_id = '' }) => {
+const getAllRepositories = async ({ page = 1, limit = 10, search = '', organization_id = '', integrationId = '' }) => {
   try {
     const skip = (page - 1) * limit;
     let query = {};
+    
+    // Filter by integration ID to ensure user only sees their data
+    if (integrationId) {
+      query.integration_id = integrationId;
+    }
     
     if (search) {
       query.$or = [
@@ -105,8 +110,11 @@ const syncRepositoriesFromGitHub = async (integrationId, organizationId = null) 
     
     for (const githubRepo of githubRepositories) {
       try {
-        // Check if repository already exists
-        let repository = await Repository.findOne({ github_id: githubRepo.id });
+        // Check if repository already exists for this integration
+        let repository = await Repository.findOne({ 
+          github_id: githubRepo.id,
+          integration_id: integrationId
+        });
         
         if (repository) {
           // Update existing repository
