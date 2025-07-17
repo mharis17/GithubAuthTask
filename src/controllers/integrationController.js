@@ -83,35 +83,6 @@ const getIntegrationStatus = asyncHandler(async (req, res) => {
   }
 });
 
-// Get all integrations (admin)
-const getAllIntegrations = asyncHandler(async (req, res) => {
-  const integrations = await integrationService.getAllIntegrations();
-  return successResponse(res, integrations, 'Integrations retrieved successfully');
-});
-
-// Get integration by ID
-const getIntegrationById = asyncHandler(async (req, res) => {
-  const { integrationId } = req.params;
-  const integration = await integrationService.getIntegrationById(integrationId);
-  return successResponse(res, integration, 'Integration retrieved successfully');
-});
-
-// Update integration
-const updateIntegration = asyncHandler(async (req, res) => {
-  const { integrationId } = req.params;
-  const updateData = req.body;
-
-  const integration = await integrationService.updateIntegration(integrationId, updateData);
-  return successResponse(res, integration, 'Integration updated successfully');
-});
-
-// Delete integration
-const deleteIntegration = asyncHandler(async (req, res) => {
-  const { integrationId } = req.params;
-  const result = await integrationService.deleteIntegration(integrationId);
-  return successResponse(res, result, 'Integration deleted successfully');
-});
-
 // Remove current user's integration
 const removeMyIntegration = asyncHandler(async (req, res) => {
   try {
@@ -145,9 +116,5 @@ const removeMyIntegration = asyncHandler(async (req, res) => {
 export {
   handleGitHubCallback,
   getIntegrationStatus,
-  getAllIntegrations,
-  getIntegrationById,
-  updateIntegration,
-  deleteIntegration,
   removeMyIntegration,
 }; 

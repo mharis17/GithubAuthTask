@@ -3,10 +3,6 @@ import passport from 'passport';
 import { 
   handleGitHubCallback,
   getIntegrationStatus,
-  getAllIntegrations,
-  getIntegrationById,
-  updateIntegration,
-  deleteIntegration,
   removeMyIntegration,
 } from '../controllers/integrationController.js';
 
@@ -25,15 +21,9 @@ router.get('/github/callback',
   handleGitHubCallback
 );
 
-// Integration status and management
+// User integration management
 router.get('/status', getIntegrationStatus);
 router.delete('/remove', removeMyIntegration);
-
-// Admin routes (for managing integrations)
-router.get('/', getAllIntegrations);
-router.get('/:integrationId', getIntegrationById);
-router.put('/:integrationId', updateIntegration);
-router.delete('/:integrationId', deleteIntegration);
 
 // Error route for OAuth failures
 router.get('/error', (req, res) => {
