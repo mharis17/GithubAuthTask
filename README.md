@@ -1,6 +1,6 @@
 # Upwork Task Backend
 
-A professional Node.js Express MongoDB backend with proper structure, error handling, and security features.
+A professional Node.js Express MongoDB backend with GitHub OAuth authentication and data synchronization.
 
 ## Features
 
@@ -15,6 +15,8 @@ A professional Node.js Express MongoDB backend with proper structure, error hand
 - **Response Standardization** - Consistent API response format
 - **Code Quality** - ESLint configuration for code consistency
 - **ES Modules** - Modern JavaScript with import/export
+- **GitHub OAuth Authentication** - Secure user authentication via GitHub
+- **GitHub Data Synchronization** - Sync organizations, repositories, and commits
 
 ## Project Structure
 
@@ -29,7 +31,10 @@ upwork-task-backend/
 │   └── database.js          # Database utilities
 ├── src/
 │   ├── controllers/
-│   │   └── userController.js # User controller functions
+│   │   ├── integrationController.js # GitHub integration controller
+│   │   ├── organizationController.js # Organization controller
+│   │   ├── repositoryController.js   # Repository controller
+│   │   └── commitController.js       # Commit controller
 │   ├── helpers/             # Business logic helpers
 │   │   ├── authHelper.js    # Authentication helpers
 │   │   ├── formatHelper.js  # Data formatting helpers
@@ -37,16 +42,30 @@ upwork-task-backend/
 │   ├── middleware/
 │   │   ├── errorHandler.js   # Global error handler
 │   │   ├── requestLogger.js  # Request logging middleware
-│   │   └── validate.js       # Joi validation middleware
+│   │   ├── validate.js       # Joi validation middleware
+│   │   └── auth.js           # Authentication middleware
 │   ├── models/
-│   │   └── User.js          # User model
+│   │   ├── GitHubUser.js     # GitHub user model
+│   │   ├── Integration.js    # GitHub integration model
+│   │   ├── Organization.js   # GitHub organization model
+│   │   ├── Repository.js     # GitHub repository model
+│   │   └── Commit.js         # GitHub commit model
 │   ├── routes/
-│   │   ├── index.js         # Main routes
-│   │   └── userRoutes.js    # User routes
+│   │   ├── index.js          # Main routes
+│   │   ├── integrationRoutes.js # GitHub integration routes
+│   │   ├── organizationRoutes.js # Organization routes
+│   │   ├── repositoryRoutes.js   # Repository routes
+│   │   └── commitRoutes.js       # Commit routes
 │   ├── services/
-│   │   └── userService.js   # User business logic functions
+│   │   ├── integrationService.js # GitHub integration service
+│   │   ├── organizationService.js # Organization service
+│   │   ├── repositoryService.js   # Repository service
+│   │   └── commitService.js       # Commit service
 │   └── validations/
-│       └── userValidation.js # Joi validation schemas
+│       ├── integrationValidation.js # Integration validation schemas
+│       ├── organizationValidation.js # Organization validation schemas
+│       ├── repositoryValidation.js   # Repository validation schemas
+│       └── commitValidation.js       # Commit validation schemas
 ├── app.js                   # Express application setup
 ├── server.js                # Server with cluster support
 ├── package.json             # Dependencies and scripts
@@ -58,6 +77,7 @@ upwork-task-backend/
 - **Node.js v22** (>= 22.0.0) - Latest LTS version
 - **MongoDB** (>= 4.0.0)
 - **npm** or **yarn**
+- **GitHub OAuth App** - For authentication
 
 ## Installation
 
@@ -83,6 +103,9 @@ NODE_ENV=development
 PORT=3000
 MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/upwork_task_db
 JWT_SECRET=your-super-secret-jwt-key-change-in-production
+GITHUB_CLIENT_ID=your-github-client-id
+GITHUB_CLIENT_SECRET=your-github-client-secret
+SESSION_SECRET=your-session-secret-key
 ```
 
 5. Start MongoDB service
@@ -98,17 +121,56 @@ npm start
 
 ## API Endpoints
 
-### Users
-- `POST /api/users/register` - Create a new user
-- `GET /api/users` - Get all users (with pagination)
-- `GET /api/users/:userId` - Get user by ID
-- `PUT /api/users/:userId` - Update user
-- `DELETE /api/users/:userId` - Delete user
-- `GET /api/users/profile` - Get current user profile
-- `PUT /api/users/profile` - Update current user profile
+### GitHub Authentication
+- `GET /api/auth/github` - Initiate GitHub OAuth
+- `GET /api/auth/github/callback` - GitHub OAuth callback
+- `GET /api/auth/integrations` - Get all integrations
+- `GET /api/auth/integrations/:integrationId` - Get integration by ID
+
+### Organizations (Requires GitHub Authentication)
+- `GET /api/organizations` - Get all organizations (with pagination and search)
+- `GET /api/organizations/:organizationId` - Get organization by ID
+- `GET /api/organizations/github/:githubId` - Get organization by GitHub ID
+- `POST /api/organizations/sync` - Sync organizations from GitHub
+
+### Repositories (Requires GitHub Authentication)
+- `GET /api/repositories` - Get all repositories (with pagination, search, and organization filter)
+- `GET /api/repositories/:repositoryId` - Get repository by ID
+- `GET /api/repositories/github/:githubId` - Get repository by GitHub ID
+- `GET /api/repositories/:repositoryId/stats` - Get repository statistics
+- `POST /api/repositories/sync` - Sync repositories from GitHub
+
+### Commits (Requires GitHub Authentication)
+- `GET /api/commits` - Get all commits (with pagination, repository filter, and author filter)
+- `GET /api/commits/:commitId` - Get commit by ID
+- `GET /api/commits/sha/:sha` - Get commit by SHA
+- `POST /api/commits/sync/:repositoryId` - Sync commits from GitHub for a repository
+- `GET /api/commits/stats/:repositoryId` - Get commit statistics for a repository
 
 ### Health Check
 - `GET /health` - Application health status
+
+## Authentication Flow
+
+### 1. GitHub OAuth Authentication
+1. User clicks "Connect GitHub" button
+2. Frontend calls `GET /api/auth/github`
+3. Backend redirects to GitHub OAuth
+4. User authorizes the application on GitHub
+5. GitHub redirects back to `GET /api/auth/github/callback`
+6. Backend creates session and stores integration details
+7. User is redirected to success page
+
+### 2. Protected API Access
+- All GitHub data endpoints require authentication
+- Session cookie is automatically sent with requests
+- Backend validates session and user's GitHub integration
+- Users can only access their own data
+
+### 3. Data Synchronization
+- Users can sync their GitHub data (organizations, repositories, commits)
+- All sync operations use the authenticated user's GitHub token
+- Data is filtered by user's integration ID
 
 ## Environment Variables
 
@@ -119,10 +181,13 @@ npm start
 | `MONGODB_URI` | MongoDB connection string | Required |
 | `JWT_SECRET` | JWT secret key | Required |
 | `JWT_EXPIRES_IN` | JWT expiration time | `7d` |
+| `GITHUB_CLIENT_ID` | GitHub OAuth client ID | Required |
+| `GITHUB_CLIENT_SECRET` | GitHub OAuth client secret | Required |
+| `GITHUB_CALLBACK_URL` | GitHub OAuth callback URL | `http://localhost:3000/api/auth/github/callback` |
+| `SESSION_SECRET` | Session secret key | Required |
 | `RATE_LIMIT_WINDOW_MS` | Rate limit window | `900000` (15 minutes) |
 | `RATE_LIMIT_MAX_REQUESTS` | Max requests per window | `100` |
 | `LOG_LEVEL` | Logging level | `info` |
-| `BCRYPT_SALT_ROUNDS` | Password hashing rounds | `12` |
 
 ## Scripts
 
@@ -142,12 +207,14 @@ npm start
 - **Winston** - Logging
 - **Helmet** - Security headers
 - **CORS** - Cross-origin resource sharing
-- **bcryptjs** - Password hashing
-- **jsonwebtoken** - JWT authentication
+- **Passport.js** - Authentication middleware
+- **GitHub OAuth** - Third-party authentication
 
 ## Security Features
 
-- **Password Hashing** - bcrypt with configurable salt rounds
+- **GitHub OAuth Authentication** - Secure third-party authentication
+- **Session Management** - Secure session handling
+- **Resource Ownership** - Users can only access their own data
 - **Rate Limiting** - Prevents abuse with configurable limits
 - **CORS** - Cross-origin resource sharing protection
 - **Helmet** - Security headers
@@ -162,13 +229,16 @@ The application uses Winston for logging with the following features:
 - Structured JSON logging
 - Request/response logging
 - Error stack traces
+- Authentication event logging
 
 ## Database
 
 - **MongoDB** with Mongoose ODM
 - **Validation** at schema level
-- **Middleware** for password hashing
-- **Simple and clean** schema design
+- **GitHub User Model** - Stores GitHub user information
+- **Integration Model** - Manages GitHub OAuth integrations
+- **Data Models** - Organizations, repositories, commits, etc.
+- **User data isolation** - Each user's data is separated by integration ID
 
 ## Error Handling
 

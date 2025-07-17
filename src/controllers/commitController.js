@@ -7,11 +7,15 @@ import logger from '../../utils/logger.js';
 const getAllCommits = asyncHandler(async (req, res) => {
   const { page = 1, limit = 10, repository_id, author } = req.query;
   
+  // Use authenticated user's integration
+  const integrationId = req.integration._id;
+  
   const commits = await commitService.getAllCommits({
     page: parseInt(page),
     limit: parseInt(limit),
     repository_id,
-    author
+    author,
+    integrationId
   });
   
   return successResponse(res, commits, 'Commits retrieved successfully');
@@ -42,7 +46,7 @@ const syncCommitsFromGitHub = asyncHandler(async (req, res) => {
   
   const result = await commitService.syncCommitsFromGitHub(repositoryId, { since, until });
   
-  logger.info(`Commits synced from GitHub for repository: ${repositoryId}`);
+  logger.info(`Commits synced from GitHub for user: ${req.user.login}, repository: ${repositoryId}`);
   return successResponse(res, result, 'Commits synced successfully');
 });
 

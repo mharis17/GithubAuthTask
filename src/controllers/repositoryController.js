@@ -7,11 +7,15 @@ import logger from '../../utils/logger.js';
 const getAllRepositories = asyncHandler(async (req, res) => {
   const { page = 1, limit = 10, search, organization_id } = req.query;
   
+  // Use authenticated user's integration
+  const integrationId = req.integration._id;
+  
   const repositories = await repositoryService.getAllRepositories({
     page: parseInt(page),
     limit: parseInt(limit),
     search,
-    organization_id
+    organization_id,
+    integrationId
   });
   
   return successResponse(res, repositories, 'Repositories retrieved successfully');
@@ -37,12 +41,13 @@ const getRepositoryByGitHubId = asyncHandler(async (req, res) => {
 
 // Sync repositories from GitHub
 const syncRepositoriesFromGitHub = asyncHandler(async (req, res) => {
-  const { integrationId } = req.params;
+  // Use authenticated user's integration
+  const integrationId = req.integration._id;
   const { organization_id } = req.query;
   
   const result = await repositoryService.syncRepositoriesFromGitHub(integrationId, organization_id);
   
-  logger.info(`Repositories synced from GitHub for integration: ${integrationId}`);
+  logger.info(`Repositories synced from GitHub for user: ${req.user.login}`);
   return successResponse(res, result, 'Repositories synced successfully');
 });
 

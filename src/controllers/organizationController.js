@@ -7,10 +7,14 @@ import logger from '../../utils/logger.js';
 const getAllOrganizations = asyncHandler(async (req, res) => {
   const { page = 1, limit = 10, search } = req.query;
   
+  // Use authenticated user's integration
+  const integrationId = req.integration._id;
+  
   const organizations = await organizationService.getAllOrganizations({
     page: parseInt(page),
     limit: parseInt(limit),
-    search
+    search,
+    integrationId
   });
   
   return successResponse(res, organizations, 'Organizations retrieved successfully');
@@ -36,11 +40,12 @@ const getOrganizationByGitHubId = asyncHandler(async (req, res) => {
 
 // Sync organizations from GitHub
 const syncOrganizationsFromGitHub = asyncHandler(async (req, res) => {
-  const { integrationId } = req.params;
+  // Use authenticated user's integration
+  const integrationId = req.integration._id;
   
   const result = await organizationService.syncOrganizationsFromGitHub(integrationId);
   
-  logger.info(`Organizations synced from GitHub for integration: ${integrationId}`);
+  logger.info(`Organizations synced from GitHub for user: ${req.user.login}`);
   return successResponse(res, result, 'Organizations synced successfully');
 });
 
