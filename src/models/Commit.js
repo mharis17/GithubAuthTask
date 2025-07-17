@@ -4,8 +4,7 @@ const commitSchema = new mongoose.Schema({
   // GitHub commit SHA
   sha: {
     type: String,
-    required: true,
-    unique: true
+    required: true
   },
   
   // Commit details
@@ -87,7 +86,7 @@ const commitSchema = new mongoose.Schema({
 });
 
 // Indexes
-commitSchema.index({ sha: 1 });
+commitSchema.index({ sha: 1 }, { unique: true });
 commitSchema.index({ repository_id: 1 });
 commitSchema.index({ organization_id: 1 });
 commitSchema.index({ integration_id: 1 });

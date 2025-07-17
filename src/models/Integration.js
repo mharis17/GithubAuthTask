@@ -4,8 +4,7 @@ const integrationSchema = new mongoose.Schema({
   // GitHub OAuth details
   github_id: {
     type: Number,
-    required: true,
-    unique: true
+    required: true
   },
   username: {
     type: String,
@@ -44,7 +43,7 @@ const integrationSchema = new mongoose.Schema({
 });
 
 // Indexes
-integrationSchema.index({ github_id: 1 });
+integrationSchema.index({ github_id: 1 }, { unique: true });
 integrationSchema.index({ username: 1 });
 
 const Integration = mongoose.model('Integration', integrationSchema);

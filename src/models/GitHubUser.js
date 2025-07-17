@@ -4,8 +4,7 @@ const gitHubUserSchema = new mongoose.Schema({
   // GitHub user ID
   github_id: {
     type: Number,
-    required: true,
-    unique: true
+    required: true
   },
   
   // User details
@@ -48,7 +47,7 @@ const gitHubUserSchema = new mongoose.Schema({
 });
 
 // Indexes
-gitHubUserSchema.index({ github_id: 1 });
+gitHubUserSchema.index({ github_id: 1 }, { unique: true });
 gitHubUserSchema.index({ login: 1 });
 gitHubUserSchema.index({ integration_id: 1 });
 

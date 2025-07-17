@@ -4,8 +4,7 @@ const repositorySchema = new mongoose.Schema({
   // GitHub repository ID
   github_id: {
     type: Number,
-    required: true,
-    unique: true
+    required: true
   },
   
   // Repository details
@@ -72,7 +71,7 @@ const repositorySchema = new mongoose.Schema({
 });
 
 // Indexes
-repositorySchema.index({ github_id: 1 });
+repositorySchema.index({ github_id: 1 }, { unique: true });
 repositorySchema.index({ full_name: 1 });
 repositorySchema.index({ organization_id: 1 });
 repositorySchema.index({ integration_id: 1 });

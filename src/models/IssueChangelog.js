@@ -4,8 +4,7 @@ const issueChangelogSchema = new mongoose.Schema({
   // GitHub event ID
   github_id: {
     type: Number,
-    required: true,
-    unique: true
+    required: true
   },
   
   // Event details
@@ -73,7 +72,7 @@ const issueChangelogSchema = new mongoose.Schema({
 });
 
 // Indexes
-issueChangelogSchema.index({ github_id: 1 });
+issueChangelogSchema.index({ github_id: 1 }, { unique: true });
 issueChangelogSchema.index({ issue_id: 1 });
 issueChangelogSchema.index({ repository_id: 1 });
 issueChangelogSchema.index({ organization_id: 1 });

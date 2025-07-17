@@ -4,8 +4,7 @@ const organizationSchema = new mongoose.Schema({
   // GitHub organization ID
   github_id: {
     type: Number,
-    required: true,
-    unique: true
+    required: true
   },
   
   // Organization details
@@ -48,7 +47,7 @@ const organizationSchema = new mongoose.Schema({
 });
 
 // Indexes
-organizationSchema.index({ github_id: 1 });
+organizationSchema.index({ github_id: 1 }, { unique: true });
 organizationSchema.index({ login: 1 });
 organizationSchema.index({ integration_id: 1 });
 

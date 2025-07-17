@@ -4,8 +4,7 @@ const pullRequestSchema = new mongoose.Schema({
   // GitHub pull request ID
   github_id: {
     type: Number,
-    required: true,
-    unique: true
+    required: true
   },
   
   // Pull request details
@@ -98,7 +97,7 @@ const pullRequestSchema = new mongoose.Schema({
 });
 
 // Indexes
-pullRequestSchema.index({ github_id: 1 });
+pullRequestSchema.index({ github_id: 1 }, { unique: true });
 pullRequestSchema.index({ repository_id: 1 });
 pullRequestSchema.index({ organization_id: 1 });
 pullRequestSchema.index({ integration_id: 1 });

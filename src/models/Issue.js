@@ -4,8 +4,7 @@ const issueSchema = new mongoose.Schema({
   // GitHub issue ID
   github_id: {
     type: Number,
-    required: true,
-    unique: true
+    required: true
   },
   
   // Issue details
@@ -95,7 +94,7 @@ const issueSchema = new mongoose.Schema({
 });
 
 // Indexes
-issueSchema.index({ github_id: 1 });
+issueSchema.index({ github_id: 1 }, { unique: true });
 issueSchema.index({ repository_id: 1 });
 issueSchema.index({ organization_id: 1 });
 issueSchema.index({ integration_id: 1 });
