@@ -8,6 +8,7 @@ import issueRoutes from './issueRoutes.js';
 import issueChangelogRoutes from './issueChangelogRoutes.js';
 import githubUserRoutes from './githubUserRoutes.js';
 import testRoutes from './testRoutes.js';
+import collectionRoutes from './collectionRoutes.js';
 
 const router = express.Router();
 
@@ -20,6 +21,7 @@ router.use('/pull-requests', pullRequestRoutes);
 router.use('/issues', issueRoutes);
 router.use('/issue-changelogs', issueChangelogRoutes);
 router.use('/github-users', githubUserRoutes);
+router.use('/collections', collectionRoutes);
 
 // Test routes (only in development)
 if (process.env.NODE_ENV === 'development') {
@@ -40,6 +42,7 @@ router.get('/', (req, res) => {
       issues: '/api/issues',
       issueChangelogs: '/api/issue-changelogs',
       githubUsers: '/api/github-users',
+      collections: '/api/collections',
       ...(process.env.NODE_ENV === 'development' && { test: '/api/test' })
     },
   });
