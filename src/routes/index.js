@@ -14,6 +14,7 @@ const router = express.Router();
 
 // API routes
 router.use('/auth', integrationRoutes);
+router.use('/integrations', integrationRoutes);
 router.use('/organizations', organizationRoutes);
 router.use('/repositories', repositoryRoutes);
 router.use('/commits', commitRoutes);
