@@ -23,50 +23,29 @@ const app = express();
 // Connect to MongoDB
 connectDB();
 
-// CORS configuration for development
+// CORS configuration (must be before session and routes)
 const corsOptions = {
-  origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
-    
-    if (process.env.NODE_ENV === 'production') {
-      // In production, only allow specific domains
-      const allowedOrigins = process.env.ALLOWED_ORIGINS ? 
-        process.env.ALLOWED_ORIGINS.split(',') : 
-        ['https://yourdomain.com'];
-      
-      if (allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error('Not allowed by CORS'));
-      }
-    } else {
-      // In development, allow localhost and local IP addresses
-      const allowedPatterns = [
-        /^http:\/\/localhost:\d+$/,           // localhost with any port
-        /^http:\/\/127\.0\.0\.1:\d+$/,        // 127.0.0.1 with any port
-        /^http:\/\/192\.168\.\d+\.\d+:\d+$/,  // 192.168.x.x with any port
-        /^http:\/\/10\.\d+\.\d+\.\d+:\d+$/,   // 10.x.x.x with any port
-        /^http:\/\/172\.(1[6-9]|2[0-9]|3[0-1])\.\d+\.\d+:\d+$/ // 172.16-31.x.x with any port
-      ];
-      
-      const isAllowed = allowedPatterns.some(pattern => pattern.test(origin));
-      if (isAllowed) {
-        callback(null, true);
-      } else {
-        logger.warn(`CORS blocked origin: ${origin}`);
-        callback(new Error('Not allowed by CORS'));
-      }
-    }
-  },
+  origin: 'http://localhost:4200',
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 };
+app.use(cors(corsOptions));
+
+// Session and passport middleware (order matters!)
+app.use(session(configureSession()));
+app.use(passport.initialize());
+app.use(passport.session());
+
+// Debug middleware to log session and user
+app.use((req, res, next) => {
+  console.log('Session:', req.session);
+  console.log('User:', req.user);
+  next();
+});
 
 // Security middleware
 app.use(helmet());
-app.use(cors(corsOptions));
 
 // Rate limiting
 const limiter = rateLimit({
@@ -88,13 +67,6 @@ app.use(requestLogger);
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-
-// Session middleware
-app.use(session(configureSession()));
-
-// Passport middleware
-app.use(passport.initialize());
-app.use(passport.session());
 
 // Configure Passport
 configurePassport();

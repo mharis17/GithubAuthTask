@@ -17,33 +17,56 @@ const configurePassport = () => {
     scope: ['repo', 'user', 'read:org']
   }, async (accessToken, refreshToken, profile, done) => {
     try {
-      // Store GitHub profile and tokens
+      console.log('GitHub OAuth callback triggered');
+      console.log('Profile received from GitHub:', profile);
+      console.log('AccessToken:', accessToken);
+      console.log('RefreshToken:', refreshToken);
+      // Store GitHub profile and tokens (use snake_case for Integration model compatibility)
       const githubUser = {
-        githubId: profile.id,
+        github_id: Number(profile.id), // Ensure this is always a number
         username: profile.username,
-        displayName: profile.displayName,
+        display_name: profile.displayName,
         email: profile.emails?.[0]?.value,
-        accessToken,
-        refreshToken,
+        access_token: accessToken,
+        refresh_token: refreshToken,
         profile: profile._json
       };
+      console.log('githubUser object to be passed to done():', githubUser);
 
       logger.info(`GitHub user authenticated: ${profile.username}`);
       return done(null, githubUser);
     } catch (error) {
       logger.error('GitHub authentication error:', error);
+      console.log('Error in GitHub OAuth callback:', error);
       return done(error, null);
     }
   }));
 
-  // Serialize user for session
+  // Serialize user for session (store only github_id as Number)
   passport.serializeUser((user, done) => {
-    done(null, user);
+    console.log('serializeUser called with:', user);
+    done(null, Number(user.github_id));
   });
 
-  // Deserialize user from session
-  passport.deserializeUser((user, done) => {
-    done(null, user);
+  // Deserialize user from session (fetch from Integration model using Number)
+  passport.deserializeUser(async (github_id, done) => {
+    try {
+      const Integration = (await import('../models/Integration.js')).default;
+      const integration = await Integration.findOne({ github_id: Number(github_id) });
+      if (integration) {
+        done(null, {
+          github_id: integration.github_id,
+          username: integration.username,
+          display_name: integration.display_name,
+          email: integration.email,
+          status: integration.status
+        });
+      } else {
+        done(null, false);
+      }
+    } catch (err) {
+      done(err, null);
+    }
   });
 
   logger.info('Passport configuration completed');

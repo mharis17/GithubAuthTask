@@ -4,7 +4,8 @@ import {
   getRepositoryById,
   getRepositoryByGitHubId,
   syncRepositoriesFromGitHub,
-  getRepositoryStats
+  getRepositoryStats,
+  testRepositoryStatus
 } from '../controllers/repositoryController.js';
 import { 
   requireAuth, 
@@ -32,5 +33,8 @@ router.get('/:repositoryId/stats', requireResourceOwnership('Repository'), getRe
 
 // Sync repositories from GitHub (no integrationId needed - uses authenticated user)
 router.post('/sync', syncRepositoriesFromGitHub);
+
+// Test repository status (for debugging)
+router.get('/test/:repositoryId', requireResourceOwnership('Repository'), testRepositoryStatus);
 
 export default router; 

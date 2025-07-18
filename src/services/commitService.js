@@ -72,15 +72,35 @@ const getAllCommits = async ({ page = 1, limit = 10, repository_id = '', author 
 
 const syncCommitsFromGitHub = async (repositoryId, { since, until } = {}) => {
   try {
+    console.log('=== SYNC COMMITS SERVICE START ===');
+    console.log('Repository ID:', repositoryId);
+    console.log('Since:', since);
+    console.log('Until:', until);
+    
     const repository = await Repository.findById(repositoryId);
     if (!repository) {
+      console.log('Repository not found for ID:', repositoryId);
       throw new Error('Repository not found');
     }
     
+    console.log('Repository found:', {
+      _id: repository._id,
+      name: repository.name,
+      full_name: repository.full_name,
+      integration_id: repository.integration_id
+    });
+    
     const integration = await Integration.findById(repository.integration_id);
     if (!integration) {
+      console.log('Integration not found for ID:', repository.integration_id);
       throw new Error('Integration not found');
     }
+    
+    console.log('Integration found:', {
+      _id: integration._id,
+      username: integration.username,
+      access_token: integration.access_token ? 'EXISTS' : 'MISSING'
+    });
     
     // Build API URL with optional date filters
     let apiUrl = `https://api.github.com/repos/${repository.full_name}/commits`;
@@ -88,6 +108,9 @@ const syncCommitsFromGitHub = async (repositoryId, { since, until } = {}) => {
     
     if (since) params.since = since;
     if (until) params.until = until;
+    
+    console.log('Making GitHub API call to:', apiUrl);
+    console.log('API params:', params);
     
     // Fetch commits from GitHub API
     const response = await axios.get(apiUrl, {
@@ -98,11 +121,17 @@ const syncCommitsFromGitHub = async (repositoryId, { since, until } = {}) => {
       params
     });
     
+    console.log('GitHub API response status:', response.status);
+    console.log('GitHub API response data length:', response.data.length);
+    console.log('First few commits:', response.data.slice(0, 3).map(c => ({ sha: c.sha, message: c.commit.message })));
+    
     const githubCommits = response.data;
     const syncedCommits = [];
     
     for (const githubCommit of githubCommits) {
       try {
+        console.log('Processing commit:', githubCommit.sha);
+        
         // Check if commit already exists for this repository
         let commit = await Commit.findOne({ 
           sha: githubCommit.sha,
@@ -110,6 +139,7 @@ const syncCommitsFromGitHub = async (repositoryId, { since, until } = {}) => {
         });
         
         if (commit) {
+          console.log('Commit exists, updating:', githubCommit.sha);
           // Update existing commit
           commit = await Commit.findByIdAndUpdate(
             commit._id,
@@ -130,6 +160,7 @@ const syncCommitsFromGitHub = async (repositoryId, { since, until } = {}) => {
             { new: true }
           );
         } else {
+          console.log('Commit does not exist, creating new:', githubCommit.sha);
           // Create new commit
           commit = new Commit({
             sha: githubCommit.sha,
@@ -145,16 +176,26 @@ const syncCommitsFromGitHub = async (repositoryId, { since, until } = {}) => {
               date: githubCommit.commit.committer.date
             },
             repository_id: repositoryId,
-            integration_id: repository.integration_id
+            integration_id: repository.integration_id,
+            organization_id: repository.organization_id, // Add organization_id
+            repository_name: repository.name, // Add repository_name
+            repository_uuid: repository.github_id.toString(), // Add repository_uuid (GitHub ID as string)
+            branch: repository.default_branch || 'main', // Add branch info
+            html_url: githubCommit.html_url // Add HTML URL if available
           });
           await commit.save();
         }
         
         syncedCommits.push(commit);
+        console.log('Successfully processed commit:', githubCommit.sha);
       } catch (commitError) {
+        console.log('Error processing commit:', githubCommit.sha, commitError.message);
         logger.error(`Error syncing commit ${githubCommit.sha}:`, commitError);
       }
     }
+    
+    console.log('Total commits synced:', syncedCommits.length);
+    console.log('=== SYNC COMMITS SERVICE END ===');
     
     logger.info(`Synced ${syncedCommits.length} commits for repository ${repositoryId}`);
     return {
@@ -162,6 +203,27 @@ const syncCommitsFromGitHub = async (repositoryId, { since, until } = {}) => {
       commits: syncedCommits
     };
   } catch (error) {
+    console.log('Error in syncCommitsFromGitHub:', error.message);
+    console.log('Error status:', error.response?.status);
+    console.log('Error status text:', error.response?.statusText);
+    console.log('Error data:', error.response?.data);
+    console.log('Error headers:', error.response?.headers);
+    
+    // Handle specific GitHub API errors
+    if (error.response?.status === 409) {
+      console.log('GitHub API 409 Conflict Error - This usually means:');
+      console.log('1. Repository is empty (no commits)');
+      console.log('2. Repository access issues');
+      console.log('3. Repository state conflicts');
+      throw new Error(`GitHub API Conflict (409): ${error.response.data?.message || 'Repository may be empty or inaccessible'}`);
+    } else if (error.response?.status === 403) {
+      console.log('GitHub API 403 Forbidden - Access token may not have repo scope');
+      throw new Error(`GitHub API Forbidden (403): ${error.response.data?.message || 'Access token may not have sufficient permissions'}`);
+    } else if (error.response?.status === 404) {
+      console.log('GitHub API 404 Not Found - Repository may not exist or be accessible');
+      throw new Error(`GitHub API Not Found (404): ${error.response.data?.message || 'Repository not found or not accessible'}`);
+    }
+    
     logger.error(`Error syncing commits for repository ${repositoryId}:`, error);
     throw error;
   }

@@ -41,12 +41,29 @@ const getCommitBySha = asyncHandler(async (req, res) => {
 
 // Sync commits from GitHub for a repository
 const syncCommitsFromGitHub = asyncHandler(async (req, res) => {
+  console.log('=== SYNC COMMITS CONTROLLER START ===');
+  console.log('Request params:', req.params);
+  console.log('Request query:', req.query);
+  console.log('Request body:', req.body);
+  
   const { repositoryId } = req.params;
   const { since, until } = req.query;
   
+  console.log('Repository ID:', repositoryId);
+  console.log('Since:', since);
+  console.log('Until:', until);
+  
+  if (!repositoryId) {
+    console.log('Repository ID is missing');
+    return errorResponse(res, 'Repository ID is required', 400);
+  }
+  
   const result = await commitService.syncCommitsFromGitHub(repositoryId, { since, until });
   
-  logger.info(`Commits synced from GitHub for user: ${req.user.login}, repository: ${repositoryId}`);
+  console.log('Sync result:', result);
+  console.log('=== SYNC COMMITS CONTROLLER END ===');
+  
+  logger.info(`Commits synced from GitHub for user: ${req.user.username}, repository: ${repositoryId}`);
   return successResponse(res, result, 'Commits synced successfully');
 });
 

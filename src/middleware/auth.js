@@ -9,11 +9,8 @@ const requireAuth = (req, res, next) => {
       logger.warn(`Unauthorized access attempt to ${req.originalUrl}`);
       return errorResponse(res, 'Authentication required', 401);
     }
-
-    // Add user info to request object
-    req.user = req.session.passport?.user;
-    
-    logger.info(`Authenticated request from GitHub user: ${req.user?.login}`);
+    // Do NOT overwrite req.user here; let Passport handle it
+    logger.info(`Authenticated request from GitHub user: ${req.user?.username}`);
     next();
   } catch (error) {
     logger.error('Authentication middleware error:', error);
@@ -30,20 +27,22 @@ const requireGitHubIntegration = async (req, res, next) => {
 
     // Check if user has an active GitHub integration
     const Integration = (await import('../models/Integration.js')).default;
+    console.log('Looking for integration with github_id:', req.user.github_id);
     const integration = await Integration.findOne({ 
-      github_id: req.user.id,
+      github_id: req.user.github_id,
       status: 'active'
     });
+    console.log('Integration found:', integration);
 
     if (!integration) {
-      logger.warn(`GitHub user ${req.user.login} has no active integration`);
+      logger.warn(`GitHub user ${req.user.username} has no active integration`);
       return errorResponse(res, 'GitHub integration required', 403);
     }
 
     // Add integration to request object
     req.integration = integration;
     
-    logger.info(`GitHub integration verified for user: ${req.user.login}`);
+    logger.info(`GitHub integration verified for user: ${req.user.username}`);
     next();
   } catch (error) {
     logger.error('GitHub integration middleware error:', error);
@@ -55,27 +54,46 @@ const requireGitHubIntegration = async (req, res, next) => {
 const requireResourceOwnership = (resourceType) => {
   return async (req, res, next) => {
     try {
+      console.log('=== RESOURCE OWNERSHIP MIDDLEWARE START ===');
+      console.log('Resource type:', resourceType);
+      console.log('Request params:', req.params);
+      
       if (!req.user) {
         return errorResponse(res, 'Authentication required', 401);
       }
 
-      const resourceId = req.params[`${resourceType}Id`] || req.params.id;
+      // Try different parameter naming conventions
+      let resourceId = req.params[`${resourceType}Id`] || 
+                      req.params[`${resourceType.toLowerCase()}Id`] || 
+                      req.params.id;
+      
+      console.log('Extracted resource ID:', resourceId);
+      
       if (!resourceId) {
+        console.log('Resource ID not found in params');
         return errorResponse(res, 'Resource ID required', 400);
       }
 
       // Import the appropriate model
       const Model = (await import(`../models/${resourceType}.js`)).default;
       
+      console.log('Looking for resource with ID:', resourceId);
       const resource = await Model.findById(resourceId);
       if (!resource) {
+        console.log('Resource not found');
         return errorResponse(res, `${resourceType} not found`, 404);
       }
+
+      console.log('Resource found:', {
+        _id: resource._id,
+        integration_id: resource.integration_id
+      });
 
       // Check if user owns this resource
       if (resource.integration_id && req.integration) {
         if (resource.integration_id.toString() !== req.integration._id.toString()) {
-          logger.warn(`GitHub user ${req.user.login} attempted to access ${resourceType} they don't own`);
+          console.log('Access denied - integration mismatch');
+          logger.warn(`GitHub user ${req.user.username} attempted to access ${resourceType} they don't own`);
           return errorResponse(res, 'Access denied', 403);
         }
       }
@@ -83,9 +101,13 @@ const requireResourceOwnership = (resourceType) => {
       // Add resource to request object
       req.resource = resource;
       
-      logger.info(`Resource ownership verified for GitHub user: ${req.user.login}`);
+      console.log('Resource ownership verified');
+      console.log('=== RESOURCE OWNERSHIP MIDDLEWARE END ===');
+      
+      logger.info(`Resource ownership verified for GitHub user: ${req.user.username}`);
       next();
     } catch (error) {
+      console.log('Resource ownership middleware error:', error.message);
       logger.error(`${resourceType} ownership middleware error:`, error);
       return errorResponse(res, 'Resource verification error', 500);
     }
