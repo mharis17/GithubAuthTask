@@ -79,13 +79,8 @@ const getAllRepositories = async ({ page = 1, limit = 10, search = '', organizat
 
 const syncRepositoriesFromGitHub = async (integrationId, organizationId = null) => {
   try {
-    console.log('=== SYNC REPOSITORIES SERVICE START ===');
-    console.log('Integration ID:', integrationId);
-    console.log('Organization ID:', organizationId);
-    
     const integration = await Integration.findById(integrationId);
     if (!integration) {
-      console.log('Integration not found for ID:', integrationId);
       throw new Error('Integration not found');
     }
     
@@ -93,14 +88,11 @@ const syncRepositoriesFromGitHub = async (integrationId, organizationId = null) 
     if (organizationId) {
       const organization = await Organization.findById(organizationId);
       if (!organization) {
-        console.log('Organization not found for ID:', organizationId);
         throw new Error('Organization not found');
       }
       apiUrl = `https://api.github.com/orgs/${organization.login}/repos`;
-      console.log('Using organization API URL:', apiUrl);
     }
     
-    console.log('Making GitHub API call to:', apiUrl);
     // Fetch repositories from GitHub API
     const response = await axios.get(apiUrl, {
       headers: {
@@ -113,17 +105,11 @@ const syncRepositoriesFromGitHub = async (integrationId, organizationId = null) 
       }
     });
     
-    console.log('GitHub API response status:', response.status);
-    console.log('GitHub API response data:', response.data);
-    console.log('Number of repositories from GitHub:', response.data.length);
-    
     const githubRepositories = response.data;
     const syncedRepositories = [];
     
     for (const githubRepo of githubRepositories) {
       try {
-        console.log('Processing repository:', githubRepo.full_name);
-        
         // Check if repository already exists for this integration
         let repository = await Repository.findOne({ 
           github_id: githubRepo.id,
@@ -131,7 +117,6 @@ const syncRepositoriesFromGitHub = async (integrationId, organizationId = null) 
         });
         
         if (repository) {
-          console.log('Repository exists, updating:', githubRepo.full_name);
           // Update existing repository
           repository = await Repository.findByIdAndUpdate(
             repository._id,
@@ -152,8 +137,6 @@ const syncRepositoriesFromGitHub = async (integrationId, organizationId = null) 
             { new: true }
           );
         } else {
-          console.log('Repository does not exist, creating new:', githubRepo.full_name);
-          console.log('Creating with organization_id:', organizationId);
           // Create new repository
           repository = new Repository({
             github_id: githubRepo.id,
@@ -175,15 +158,10 @@ const syncRepositoriesFromGitHub = async (integrationId, organizationId = null) 
         }
         
         syncedRepositories.push(repository);
-        console.log('Successfully processed repository:', githubRepo.full_name);
       } catch (repoError) {
-        console.log('Error processing repository:', githubRepo.full_name, repoError.message);
         logger.error(`Error syncing repository ${githubRepo.full_name}:`, repoError);
       }
     }
-    
-    console.log('Total repositories synced:', syncedRepositories.length);
-    console.log('=== SYNC REPOSITORIES SERVICE END ===');
     
     logger.info(`Synced ${syncedRepositories.length} repositories for integration ${integrationId}`);
     return {
@@ -191,8 +169,6 @@ const syncRepositoriesFromGitHub = async (integrationId, organizationId = null) 
       repositories: syncedRepositories
     };
   } catch (error) {
-    console.log('Error in syncRepositoriesFromGitHub:', error.message);
-    console.log('Error details:', error.response?.data || error.message);
     logger.error(`Error syncing repositories for integration ${integrationId}:`, error);
     throw error;
   }

@@ -43,21 +43,17 @@ const getRepositoryByGitHubId = asyncHandler(async (req, res) => {
 
 // Sync repositories from GitHub
 const syncRepositoriesFromGitHub = asyncHandler(async (req, res) => {
-  console.log('=== SYNC REPOSITORIES CONTROLLER START ===');
-  console.log('Request body:', req.body);
-  console.log('Request query:', req.query);
+
   
   // Use authenticated user's integration
   const integrationId = req.integration._id;
   const { organization_id } = req.body; // Changed from req.query to req.body
   
-  console.log('Integration ID:', integrationId);
-  console.log('Organization ID:', organization_id);
+  
   
   const result = await repositoryService.syncRepositoriesFromGitHub(integrationId, organization_id);
   
-  console.log('Sync result:', result);
-  console.log('=== SYNC REPOSITORIES CONTROLLER END ===');
+  
   
   logger.info(`Repositories synced from GitHub for user: ${req.user.username}`);
   return successResponse(res, result, 'Repositories synced successfully');
@@ -74,18 +70,13 @@ const getRepositoryStats = asyncHandler(async (req, res) => {
 
 // Test repository status and check if it has commits
 const testRepositoryStatus = asyncHandler(async (req, res) => {
-  console.log('=== TEST REPOSITORY STATUS START ===');
+
   
   const { repositoryId } = req.params;
-  console.log('Repository ID:', repositoryId);
+  
   
   const repository = await repositoryService.getRepositoryById(repositoryId);
-  console.log('Repository found:', {
-    _id: repository._id,
-    name: repository.name,
-    full_name: repository.full_name,
-    integration_id: repository.integration_id
-  });
+  
   
   // Test GitHub API call to check repository status
   const integration = await Integration.findById(repository.integration_id);

@@ -124,35 +124,17 @@ const getAllIssues = async ({ page = 1, limit = 10, repository_id = '', state = 
 
 const syncIssuesFromGitHub = async (repositoryId, { state = 'all', labels = '' } = {}) => {
   try {
-    console.log('=== SYNC ISSUES SERVICE START ===');
-    console.log('Repository ID:', repositoryId);
-    console.log('State filter:', state);
-    console.log('Labels filter:', labels);
+
     
     const repository = await Repository.findById(repositoryId);
     if (!repository) {
-      console.log('Repository not found for ID:', repositoryId);
       throw new Error('Repository not found');
     }
     
-    console.log('Repository found:', {
-      _id: repository._id,
-      name: repository.name,
-      full_name: repository.full_name,
-      integration_id: repository.integration_id
-    });
-    
     const integration = await Integration.findById(repository.integration_id);
     if (!integration) {
-      console.log('Integration not found for ID:', repository.integration_id);
       throw new Error('Integration not found');
     }
-    
-    console.log('Integration found:', {
-      _id: integration._id,
-      username: integration.username,
-      access_token: integration.access_token ? 'EXISTS' : 'MISSING'
-    });
     
     // Build API URL
     let apiUrl = `https://api.github.com/repos/${repository.full_name}/issues`;
@@ -165,9 +147,6 @@ const syncIssuesFromGitHub = async (repositoryId, { state = 'all', labels = '' }
       params.labels = labels;
     }
     
-    console.log('Making GitHub API call to:', apiUrl);
-    console.log('API params:', params);
-    
     // Fetch issues from GitHub API
     const response = await axios.get(apiUrl, {
       headers: {
@@ -177,17 +156,11 @@ const syncIssuesFromGitHub = async (repositoryId, { state = 'all', labels = '' }
       params
     });
     
-    console.log('GitHub API response status:', response.status);
-    console.log('GitHub API response data length:', response.data.length);
-    console.log('First few issues:', response.data.slice(0, 3).map(issue => ({ number: issue.number, title: issue.title, state: issue.state })));
-    
     const githubIssues = response.data;
     const syncedIssues = [];
     
     for (const githubIssue of githubIssues) {
       try {
-        console.log('Processing issue:', githubIssue.number);
-        
         // Check if issue already exists for this repository
         let issue = await Issue.findOne({ 
           github_id: githubIssue.id,
@@ -195,7 +168,6 @@ const syncIssuesFromGitHub = async (repositoryId, { state = 'all', labels = '' }
         });
         
         if (issue) {
-          console.log('Issue exists, updating:', githubIssue.number);
           // Update existing issue
           issue = await Issue.findByIdAndUpdate(
             issue._id,
@@ -228,7 +200,6 @@ const syncIssuesFromGitHub = async (repositoryId, { state = 'all', labels = '' }
             { new: true }
           );
         } else {
-          console.log('Issue does not exist, creating new:', githubIssue.number);
           // Create new issue
           issue = new Issue({
             github_id: githubIssue.id,
@@ -271,15 +242,10 @@ const syncIssuesFromGitHub = async (repositoryId, { state = 'all', labels = '' }
         }
         
         syncedIssues.push(issue);
-        console.log('Successfully processed issue:', githubIssue.number);
       } catch (issueError) {
-        console.log('Error processing issue:', githubIssue.number, issueError.message);
         logger.error(`Error syncing issue ${githubIssue.number}:`, issueError);
       }
     }
-    
-    console.log('Total issues synced:', syncedIssues.length);
-    console.log('=== SYNC ISSUES SERVICE END ===');
     
     logger.info(`Synced ${syncedIssues.length} issues for repository ${repositoryId}`);
     return {
@@ -287,9 +253,6 @@ const syncIssuesFromGitHub = async (repositoryId, { state = 'all', labels = '' }
       issues: syncedIssues
     };
   } catch (error) {
-    console.log('Error in syncIssuesFromGitHub:', error.message);
-    console.log('Error status:', error.response?.status);
-    console.log('Error data:', error.response?.data);
     logger.error(`Error syncing issues for repository ${repositoryId}:`, error);
     throw error;
   }

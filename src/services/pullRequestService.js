@@ -118,34 +118,15 @@ const getAllPullRequests = async ({ page = 1, limit = 10, repository_id = '', st
 
 const syncPullRequestsFromGitHub = async (repositoryId, { state = 'all' } = {}) => {
   try {
-    console.log('=== SYNC PULL REQUESTS SERVICE START ===');
-    console.log('Repository ID:', repositoryId);
-    console.log('State filter:', state);
-    
     const repository = await Repository.findById(repositoryId);
     if (!repository) {
-      console.log('Repository not found for ID:', repositoryId);
       throw new Error('Repository not found');
     }
     
-    console.log('Repository found:', {
-      _id: repository._id,
-      name: repository.name,
-      full_name: repository.full_name,
-      integration_id: repository.integration_id
-    });
-    
     const integration = await Integration.findById(repository.integration_id);
     if (!integration) {
-      console.log('Integration not found for ID:', repository.integration_id);
       throw new Error('Integration not found');
     }
-    
-    console.log('Integration found:', {
-      _id: integration._id,
-      username: integration.username,
-      access_token: integration.access_token ? 'EXISTS' : 'MISSING'
-    });
     
     // Build API URL
     let apiUrl = `https://api.github.com/repos/${repository.full_name}/pulls`;
@@ -153,9 +134,6 @@ const syncPullRequestsFromGitHub = async (repositoryId, { state = 'all' } = {}) 
       per_page: 100,
       state: state // 'open', 'closed', 'all'
     };
-    
-    console.log('Making GitHub API call to:', apiUrl);
-    console.log('API params:', params);
     
     // Fetch pull requests from GitHub API
     const response = await axios.get(apiUrl, {
@@ -166,17 +144,11 @@ const syncPullRequestsFromGitHub = async (repositoryId, { state = 'all' } = {}) 
       params
     });
     
-    console.log('GitHub API response status:', response.status);
-    console.log('GitHub API response data length:', response.data.length);
-    console.log('First few PRs:', response.data.slice(0, 3).map(pr => ({ number: pr.number, title: pr.title, state: pr.state })));
-    
     const githubPullRequests = response.data;
     const syncedPullRequests = [];
     
     for (const githubPR of githubPullRequests) {
       try {
-        console.log('Processing pull request:', githubPR.number);
-        
         // Check if pull request already exists for this repository
         let pullRequest = await PullRequest.findOne({ 
           github_id: githubPR.id,
@@ -184,7 +156,6 @@ const syncPullRequestsFromGitHub = async (repositoryId, { state = 'all' } = {}) 
         });
         
         if (pullRequest) {
-          console.log('Pull request exists, updating:', githubPR.number);
           // Update existing pull request
           pullRequest = await PullRequest.findByIdAndUpdate(
             pullRequest._id,
@@ -220,7 +191,6 @@ const syncPullRequestsFromGitHub = async (repositoryId, { state = 'all' } = {}) 
             { new: true }
           );
         } else {
-          console.log('Pull request does not exist, creating new:', githubPR.number);
           // Create new pull request
           pullRequest = new PullRequest({
             github_id: githubPR.id,
@@ -261,15 +231,10 @@ const syncPullRequestsFromGitHub = async (repositoryId, { state = 'all' } = {}) 
         }
         
         syncedPullRequests.push(pullRequest);
-        console.log('Successfully processed pull request:', githubPR.number);
       } catch (prError) {
-        console.log('Error processing pull request:', githubPR.number, prError.message);
         logger.error(`Error syncing pull request ${githubPR.number}:`, prError);
       }
     }
-    
-    console.log('Total pull requests synced:', syncedPullRequests.length);
-    console.log('=== SYNC PULL REQUESTS SERVICE END ===');
     
     logger.info(`Synced ${syncedPullRequests.length} pull requests for repository ${repositoryId}`);
     return {
@@ -277,9 +242,6 @@ const syncPullRequestsFromGitHub = async (repositoryId, { state = 'all' } = {}) 
       pullRequests: syncedPullRequests
     };
   } catch (error) {
-    console.log('Error in syncPullRequestsFromGitHub:', error.message);
-    console.log('Error status:', error.response?.status);
-    console.log('Error data:', error.response?.data);
     logger.error(`Error syncing pull requests for repository ${repositoryId}:`, error);
     throw error;
   }

@@ -73,46 +73,22 @@ const getAllIssueChangelogs = async ({ page = 1, limit = 10, issue_id = '', repo
 
 const syncIssueChangelogsFromGitHub = async (issueId) => {
   try {
-    console.log('=== SYNC ISSUE CHANGELOGS SERVICE START ===');
-    console.log('Issue ID:', issueId);
+
     
     const issue = await Issue.findById(issueId);
     if (!issue) {
-      console.log('Issue not found for ID:', issueId);
       throw new Error('Issue not found');
     }
     
-    console.log('Issue found:', {
-      _id: issue._id,
-      number: issue.number,
-      title: issue.title,
-      repository_id: issue.repository_id
-    });
-    
     const repository = await Repository.findById(issue.repository_id);
     if (!repository) {
-      console.log('Repository not found for ID:', issue.repository_id);
       throw new Error('Repository not found');
     }
     
-    console.log('Repository found:', {
-      _id: repository._id,
-      name: repository.name,
-      full_name: repository.full_name,
-      integration_id: repository.integration_id
-    });
-    
     const integration = await Integration.findById(repository.integration_id);
     if (!integration) {
-      console.log('Integration not found for ID:', repository.integration_id);
       throw new Error('Integration not found');
     }
-    
-    console.log('Integration found:', {
-      _id: integration._id,
-      username: integration.username,
-      access_token: integration.access_token ? 'EXISTS' : 'MISSING'
-    });
     
     // Build API URL for issue events
     let apiUrl = `https://api.github.com/repos/${repository.full_name}/issues/${issue.number}/events`;
@@ -120,8 +96,7 @@ const syncIssueChangelogsFromGitHub = async (issueId) => {
       per_page: 100
     };
     
-    console.log('Making GitHub API call to:', apiUrl);
-    console.log('API params:', params);
+
     
     // Fetch issue events from GitHub API
     const response = await axios.get(apiUrl, {
@@ -132,17 +107,11 @@ const syncIssueChangelogsFromGitHub = async (issueId) => {
       params
     });
     
-    console.log('GitHub API response status:', response.status);
-    console.log('GitHub API response data length:', response.data.length);
-    console.log('First few events:', response.data.slice(0, 3).map(event => ({ id: event.id, event: event.event, actor: event.actor?.login })));
-    
     const githubEvents = response.data;
     const syncedChangelogs = [];
     
     for (const githubEvent of githubEvents) {
       try {
-        console.log('Processing event:', githubEvent.id);
-        
         // Check if changelog already exists for this issue
         let changelog = await IssueChangelog.findOne({ 
           github_id: githubEvent.id,
@@ -150,7 +119,6 @@ const syncIssueChangelogsFromGitHub = async (issueId) => {
         });
         
         if (changelog) {
-          console.log('Changelog exists, updating:', githubEvent.id);
           // Update existing changelog
           changelog = await IssueChangelog.findByIdAndUpdate(
             changelog._id,
@@ -191,7 +159,6 @@ const syncIssueChangelogsFromGitHub = async (issueId) => {
             { new: true }
           );
         } else {
-          console.log('Changelog does not exist, creating new:', githubEvent.id);
           // Create new changelog
           changelog = new IssueChangelog({
             github_id: githubEvent.id,
@@ -235,15 +202,10 @@ const syncIssueChangelogsFromGitHub = async (issueId) => {
         }
         
         syncedChangelogs.push(changelog);
-        console.log('Successfully processed changelog:', githubEvent.id);
       } catch (changelogError) {
-        console.log('Error processing changelog:', githubEvent.id, changelogError.message);
         logger.error(`Error syncing changelog ${githubEvent.id}:`, changelogError);
       }
     }
-    
-    console.log('Total changelogs synced:', syncedChangelogs.length);
-    console.log('=== SYNC ISSUE CHANGELOGS SERVICE END ===');
     
     logger.info(`Synced ${syncedChangelogs.length} changelogs for issue ${issueId}`);
     return {
@@ -251,9 +213,6 @@ const syncIssueChangelogsFromGitHub = async (issueId) => {
       changelogs: syncedChangelogs
     };
   } catch (error) {
-    console.log('Error in syncIssueChangelogsFromGitHub:', error.message);
-    console.log('Error status:', error.response?.status);
-    console.log('Error data:', error.response?.data);
     logger.error(`Error syncing changelogs for issue ${issueId}:`, error);
     throw error;
   }

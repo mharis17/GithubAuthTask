@@ -1,11 +1,11 @@
 # Upwork Task Backend
 
-A professional Node.js Express MongoDB backend with GitHub OAuth authentication and data synchronization.
+A professional Node.js Express MongoDB backend with GitHub OAuth authentication and comprehensive GitHub data synchronization.
 
 ## Features
 
 - **Node.js v22** - Latest LTS version with ES modules
-- **Express.js v5** - Latest Express with improved performance
+- **Express.js v4.18.2** - Robust web framework with middleware support
 - **Cluster Support** - Multi-process architecture for better performance
 - **Comprehensive Error Handling** - Global error handler with proper logging
 - **Request Validation** - Joi validation for all incoming requests
@@ -16,66 +16,88 @@ A professional Node.js Express MongoDB backend with GitHub OAuth authentication 
 - **Code Quality** - ESLint configuration for code consistency
 - **ES Modules** - Modern JavaScript with import/export
 - **GitHub OAuth Authentication** - Secure user authentication via GitHub
-- **GitHub Data Synchronization** - Sync organizations, repositories, and commits
+- **GitHub Data Synchronization** - Sync organizations, repositories, commits, issues, pull requests, and changelogs
+- **Vercel Deployment Ready** - Optimized for serverless deployment
 
 ## Project Structure
 
 ```
 upwork-task-backend/
-├── config/
-│   └── database.js          # Database connection configuration
-├── utils/                   # Application-wide utilities
-│   ├── logger.js            # Winston logger configuration
-│   ├── asyncHandler.js      # Async error wrapper
-│   ├── responseHandler.js   # Response formatting utilities
-│   └── database.js          # Database utilities
 ├── src/
+│   ├── config/
+│   │   ├── database.js          # Database connection configuration
+│   │   ├── passport.js          # Passport.js configuration
+│   │   └── session.js           # Session configuration
 │   ├── controllers/
-│   │   ├── integrationController.js # GitHub integration controller
-│   │   ├── organizationController.js # Organization controller
-│   │   ├── repositoryController.js   # Repository controller
-│   │   └── commitController.js       # Commit controller
-│   ├── helpers/             # Business logic helpers
-│   │   ├── authHelper.js    # Authentication helpers
-│   │   ├── formatHelper.js  # Data formatting helpers
-│   │   └── validationHelper.js # Custom validation helpers
+│   │   ├── collectionController.js      # Collection management controller
+│   │   ├── commitController.js          # Commit controller
+│   │   ├── githubUserController.js      # GitHub user controller
+│   │   ├── integrationController.js     # GitHub integration controller
+│   │   ├── issueController.js           # Issue controller
+│   │   ├── issueChangelogController.js  # Issue changelog controller
+│   │   ├── organizationController.js    # Organization controller
+│   │   ├── pullRequestController.js     # Pull request controller
+│   │   └── repositoryController.js      # Repository controller
 │   ├── middleware/
-│   │   ├── errorHandler.js   # Global error handler
-│   │   ├── requestLogger.js  # Request logging middleware
-│   │   ├── validate.js       # Joi validation middleware
-│   │   └── auth.js           # Authentication middleware
+│   │   ├── auth.js              # Authentication middleware
+│   │   ├── errorHandler.js      # Global error handler
+│   │   ├── requestLogger.js     # Request logging middleware
+│   │   └── validate.js          # Joi validation middleware
 │   ├── models/
-│   │   ├── GitHubUser.js     # GitHub user model
-│   │   ├── Integration.js    # GitHub integration model
-│   │   ├── Organization.js   # GitHub organization model
-│   │   ├── Repository.js     # GitHub repository model
-│   │   └── Commit.js         # GitHub commit model
+│   │   ├── Commit.js            # Commit model
+│   │   ├── GitHubUser.js        # GitHub user model
+│   │   ├── Integration.js       # GitHub integration model
+│   │   ├── Issue.js             # Issue model
+│   │   ├── IssueChangelog.js    # Issue changelog model
+│   │   ├── Organization.js      # GitHub organization model
+│   │   ├── PullRequest.js       # Pull request model
+│   │   └── Repository.js        # GitHub repository model
 │   ├── routes/
-│   │   ├── index.js          # Main routes
+│   │   ├── index.js             # Main routes aggregator
+│   │   ├── collectionRoutes.js  # Collection routes
+│   │   ├── commitRoutes.js      # Commit routes
+│   │   ├── githubUserRoutes.js  # GitHub user routes
 │   │   ├── integrationRoutes.js # GitHub integration routes
+│   │   ├── issueRoutes.js       # Issue routes
+│   │   ├── issueChangelogRoutes.js # Issue changelog routes
 │   │   ├── organizationRoutes.js # Organization routes
-│   │   ├── repositoryRoutes.js   # Repository routes
-│   │   └── commitRoutes.js       # Commit routes
+│   │   ├── pullRequestRoutes.js # Pull request routes
+│   │   ├── repositoryRoutes.js  # Repository routes
+│   │   └── testRoutes.js        # Test routes (development only)
 │   ├── services/
+│   │   ├── collectionService.js # Collection service
+│   │   ├── commitService.js     # Commit service
+│   │   ├── githubUserService.js # GitHub user service
 │   │   ├── integrationService.js # GitHub integration service
+│   │   ├── issueService.js      # Issue service
+│   │   ├── issueChangelogService.js # Issue changelog service
 │   │   ├── organizationService.js # Organization service
-│   │   ├── repositoryService.js   # Repository service
-│   │   └── commitService.js       # Commit service
+│   │   ├── pullRequestService.js # Pull request service
+│   │   └── repositoryService.js # Repository service
 │   └── validations/
-│       ├── integrationValidation.js # Integration validation schemas
+│       ├── commitValidation.js      # Commit validation schemas
 │       ├── organizationValidation.js # Organization validation schemas
-│       ├── repositoryValidation.js   # Repository validation schemas
-│       └── commitValidation.js       # Commit validation schemas
+│       └── repositoryValidation.js   # Repository validation schemas
+├── utils/
+│   ├── asyncHandler.js      # Async error wrapper
+│   ├── database.js          # Database utilities
+│   ├── logger.js            # Winston logger configuration
+│   └── responseHandler.js   # Response formatting utilities
+├── logs/                    # Application logs
 ├── app.js                   # Express application setup
 ├── server.js                # Server with cluster support
+├── vercel-server.js         # Vercel-optimized server
+├── vercel.json              # Vercel deployment configuration
 ├── package.json             # Dependencies and scripts
+├── env.example              # Environment variables template
+├── eslint.config.js         # ESLint configuration
 └── README.md               # Project documentation
 ```
 
 ## Prerequisites
 
 - **Node.js v22** (>= 22.0.0) - Latest LTS version
-- **MongoDB** (>= 4.0.0)
+- **MongoDB** (>= 4.0.0) or MongoDB Atlas
 - **npm** or **yarn**
 - **GitHub OAuth App** - For authentication
 
@@ -121,11 +143,19 @@ npm start
 
 ## API Endpoints
 
+### Health Check
+- `GET /health` - Application health status
+
 ### GitHub Authentication
 - `GET /api/auth/github` - Initiate GitHub OAuth
 - `GET /api/auth/github/callback` - GitHub OAuth callback
 - `GET /api/auth/integrations` - Get all integrations
 - `GET /api/auth/integrations/:integrationId` - Get integration by ID
+- `GET /api/auth/status` - Get integration status
+
+### Collections
+- `GET /api/collections` - List all collections/entities
+- `GET /api/collections/:collectionName` - Fetch collection data
 
 ### Organizations (Requires GitHub Authentication)
 - `GET /api/organizations` - Get all organizations (with pagination and search)
@@ -139,6 +169,7 @@ npm start
 - `GET /api/repositories/github/:githubId` - Get repository by GitHub ID
 - `GET /api/repositories/:repositoryId/stats` - Get repository statistics
 - `POST /api/repositories/sync` - Sync repositories from GitHub
+- `GET /api/repositories/test/:repositoryId` - Test repository status
 
 ### Commits (Requires GitHub Authentication)
 - `GET /api/commits` - Get all commits (with pagination, repository filter, and author filter)
@@ -147,8 +178,37 @@ npm start
 - `POST /api/commits/sync/:repositoryId` - Sync commits from GitHub for a repository
 - `GET /api/commits/stats/:repositoryId` - Get commit statistics for a repository
 
-### Health Check
-- `GET /health` - Application health status
+### Pull Requests (Requires GitHub Authentication)
+- `GET /api/pull-requests` - Get all pull requests (with pagination and filters)
+- `GET /api/pull-requests/:pullRequestId` - Get pull request by ID
+- `GET /api/pull-requests/github/:githubId` - Get pull request by GitHub ID
+- `POST /api/pull-requests/sync/:repositoryId` - Sync pull requests from GitHub
+- `GET /api/pull-requests/sync-status` - Check pull request sync status
+
+### Issues (Requires GitHub Authentication)
+- `GET /api/issues` - Get all issues (with pagination and filters)
+- `GET /api/issues/:issueId` - Get issue by ID
+- `GET /api/issues/github/:githubId` - Get issue by GitHub ID
+- `POST /api/issues/sync/:repositoryId` - Sync issues from GitHub
+- `GET /api/issues/sync-status` - Check issue sync status
+- `GET /api/issues/:issueId/stats` - Get issue statistics
+
+### Issue Changelogs (Requires GitHub Authentication)
+- `GET /api/issue-changelogs` - Get all issue changelogs (with pagination and filters)
+- `GET /api/issue-changelogs/:changelogId` - Get changelog by ID
+- `GET /api/issue-changelogs/github/:githubId` - Get changelog by GitHub ID
+- `POST /api/issue-changelogs/sync/:issueId` - Sync issue changelogs from GitHub
+
+### GitHub Users (Requires GitHub Authentication)
+- `GET /api/github-users` - Get all GitHub users (with pagination and filters)
+- `GET /api/github-users/:userId` - Get GitHub user by ID
+- `GET /api/github-users/github/:githubId` - Get GitHub user by GitHub ID
+
+### Test Routes (Development Only)
+- `GET /api/test/health` - Test health check
+- `GET /api/test/integration` - Test integration
+- `GET /api/test/github-data` - Test GitHub data
+- `GET /api/test/models` - Test models
 
 ## Authentication Flow
 
@@ -168,9 +228,10 @@ npm start
 - Users can only access their own data
 
 ### 3. Data Synchronization
-- Users can sync their GitHub data (organizations, repositories, commits)
+- Users can sync their GitHub data (organizations, repositories, commits, issues, pull requests)
 - All sync operations use the authenticated user's GitHub token
 - Data is filtered by user's integration ID
+- Comprehensive error handling and logging for sync operations
 
 ## Environment Variables
 
@@ -179,6 +240,7 @@ npm start
 | `NODE_ENV` | Environment mode | `development` |
 | `PORT` | Server port | `3000` |
 | `MONGODB_URI` | MongoDB connection string | Required |
+| `MONGODB_URI_TEST` | MongoDB test connection string | `mongodb://localhost:27017/test_database` |
 | `JWT_SECRET` | JWT secret key | Required |
 | `JWT_EXPIRES_IN` | JWT expiration time | `7d` |
 | `GITHUB_CLIENT_ID` | GitHub OAuth client ID | Required |
@@ -188,75 +250,57 @@ npm start
 | `RATE_LIMIT_WINDOW_MS` | Rate limit window | `900000` (15 minutes) |
 | `RATE_LIMIT_MAX_REQUESTS` | Max requests per window | `100` |
 | `LOG_LEVEL` | Logging level | `info` |
+| `BCRYPT_SALT_ROUNDS` | Password hashing rounds | `12` |
+| `FRONTEND_URL` | Frontend URL for CORS | `http://localhost:4200` |
 
 ## Scripts
 
-- `npm start` - Start production server
+- `npm start` - Start production server with clustering
 - `npm run dev` - Start development server with nodemon
 - `npm test` - Run tests
 - `npm run lint` - Run ESLint
 - `npm run lint:fix` - Fix ESLint issues
 
+## Deployment
+
+### Vercel Deployment
+The application is optimized for Vercel deployment with:
+- `vercel-server.js` - Serverless-optimized server
+- `vercel.json` - Vercel configuration
+- Proper environment variable handling
+- Graceful error handling for missing configurations
+
+### Local Development
+- Uses `server.js` with clustering for better performance
+- Comprehensive logging to `logs/` directory
+- Hot reload with nodemon
+
 ## Technology Stack
 
-- **Node.js v22** - Latest LTS with ES modules
-- **Express.js v5** - Latest Express with improved performance
-- **MongoDB** - NoSQL database
-- **Mongoose v8** - MongoDB ODM
-- **Joi** - Request validation
-- **Winston** - Logging
-- **Helmet** - Security headers
-- **CORS** - Cross-origin resource sharing
-- **Passport.js** - Authentication middleware
-- **GitHub OAuth** - Third-party authentication
-
-## Security Features
-
-- **GitHub OAuth Authentication** - Secure third-party authentication
-- **Session Management** - Secure session handling
-- **Resource Ownership** - Users can only access their own data
-- **Rate Limiting** - Prevents abuse with configurable limits
-- **CORS** - Cross-origin resource sharing protection
-- **Helmet** - Security headers
-- **Input Validation** - Joi validation for all inputs
-- **Error Handling** - Comprehensive error handling without exposing internals
-
-## Logging
-
-The application uses Winston for logging with the following features:
-- File-based logging (error.log, combined.log)
-- Console logging in development
-- Structured JSON logging
-- Request/response logging
-- Error stack traces
-- Authentication event logging
-
-## Database
-
-- **MongoDB** with Mongoose ODM
-- **Validation** at schema level
-- **GitHub User Model** - Stores GitHub user information
-- **Integration Model** - Manages GitHub OAuth integrations
-- **Data Models** - Organizations, repositories, commits, etc.
-- **User data isolation** - Each user's data is separated by integration ID
+- **Runtime**: Node.js v22
+- **Framework**: Express.js v4.18.2
+- **Database**: MongoDB with Mongoose ODM
+- **Authentication**: Passport.js with GitHub OAuth
+- **Validation**: Joi
+- **Logging**: Winston
+- **Security**: Helmet, CORS, Rate Limiting
+- **Code Quality**: ESLint
+- **Deployment**: Vercel (serverless)
 
 ## Error Handling
 
-- Global error handler middleware
-- Proper HTTP status codes
-- Structured error responses
-- Error logging with context
-- Development vs production error details
+- Global error handler with proper HTTP status codes
+- Comprehensive logging with Winston
+- Graceful handling of missing environment variables
+- Proper MongoDB connection error handling
+- Rate limiting and security middleware
 
-## Contributing
+## Security Features
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Run linting: `npm run lint`
-6. Submit a pull request
-
-## License
-
-MIT License - see LICENSE file for details 
+- Helmet.js for security headers
+- CORS configuration
+- Rate limiting
+- Session management
+- Input validation with Joi
+- Secure password handling
+- GitHub OAuth integration 

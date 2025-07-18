@@ -12,7 +12,7 @@
     "lint:fix": "eslint src/ --fix"
   },
   "keywords": ["nodejs", "express", "mongodb", "api", "backend", "github", "oauth"],
-  "author": "Your Name",
+  "author": "M haris",
   "license": "MIT",
   "dependencies": {
     "express": "^4.18.2",

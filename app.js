@@ -8,7 +8,7 @@ import dotenv from 'dotenv';
 import session from 'express-session';
 import passport from 'passport';
 
-import connectDB from './config/database.js';
+import connectDB from './src/config/database.js';
 import configureSession from './src/config/session.js';
 import configurePassport from './src/config/passport.js';
 import logger from './utils/logger.js';
@@ -37,12 +37,7 @@ app.use(session(configureSession()));
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Debug middleware to log session and user
-app.use((req, res, next) => {
-  console.log('Session:', req.session);
-  console.log('User:', req.user);
-  next();
-});
+
 
 // Security middleware
 app.use(helmet());
